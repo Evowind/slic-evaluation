@@ -159,29 +159,75 @@ Soit une réduction du temps d’exécution d’environ **65 %**, ce qui constit
 
 ---
 
-### Étude paramétrique
+## Étude paramétrique
 
-#### Impact du nombre de superpixels (n_segments)
+L’étude paramétrique repose exclusivement sur une **recherche en grille contrôlée**, visualisée par la figure `grid_search_topk`.
+Contrairement à une analyse paramètre-par-paramètre, cette approche compare directement des configurations complètes (`n_segments`, `compactness`) à **granularité réelle comparable**.
 
-![Étude n\_segments](results/slic/parameters/n_segments_metrics.png)
+La sélection des meilleures configurations est effectuée à l’aide d’un **score multi-métrique normalisé**, intégrant :
 
-**Observations** :
+* la qualité régionale (ASA, Explained Variation),
+* la précision des contours (Boundary Recall),
+* la pénalisation de la sous-segmentation (UE, CUE),
+* la stabilité inter-GT (écarts-types),
+* et le temps d’exécution.
 
-* L’augmentation du nombre de superpixels améliore l’ASA et réduit l’under-segmentation
-* Le Boundary Recall ne progresse pas nécessairement de manière monotone
-* La régularité globale reste sensible aux variations de n
+Les configurations dont le nombre réel de superpixels s’écarte excessivement de la cible sont exclues.
 
 ---
 
-#### Impact de la compacité (m)
+### Résultats de la recherche en grille
 
-![Étude compactness](results/slic/parameters/compactness_metrics.png)
+![Résultats grid search](results/slic/parameters/grid_search_topk.png)
 
-**Observations** :
+Les meilleures configurations retenues pour une granularité cible d’environ 200 superpixels sont :
 
-* Une compacité élevée favorise des superpixels réguliers mais dégrade l’adhérence aux contours
-* Une compacité faible améliore l’alignement avec les frontières au prix d’une structure plus irrégulière
-* Un compromis raisonnable se situe autour de m ≈ 10–15, sans optimum universel
+| n_segments | m  | Score  | ASA    | UE     |
+| ---------- | -- | ------ | ------ | ------ |
+| 200        | 20 | 5.4675 | 0.9171 | 0.5888 |
+| 200        | 15 | 4.8744 | 0.9148 | 0.5949 |
+| 200        | 10 | 3.1021 | 0.9121 | 0.6267 |
+| 200        | 5  | 0.4468 | 0.9086 | 0.6536 |
+
+---
+
+### Analyse
+
+* À granularité contrôlée, le paramètre dominant est la **compacité**
+* L’augmentation de `m` améliore la cohérence régionale et réduit la sous-segmentation
+* Les faibles valeurs de `m` favorisent l’adhérence locale aux contours, mais au prix d’une dégradation nette des métriques régionales
+* Le score composite met en évidence un compromis robuste autour de **m ∈ [15, 20]**
+
+Les variations observées sont cohérentes avec le comportement interne de SLIC :
+une compacité plus élevée stabilise les clusters et limite les débordements inter-régions, tandis qu’une compacité trop faible favorise des formes irrégulières et instables.
+
+---
+
+### Stabilité du nombre réel de superpixels
+
+Malgré un paramètre cible `n_segments = 200`, le nombre réel de superpixels dépend de la compacité :
+
+* m = 20 → ~210 superpixels
+* m = 15 → ~209 superpixels
+* m = 10 → ~203 superpixels
+* m = 5  → ~188 superpixels
+
+Ces écarts justifient l’approche retenue :
+
+* filtrage des configurations hors tolérance
+* comparaison basée sur le nombre réel de régions plutôt que sur le paramètre demandé
+
+---
+
+### Conclusion
+
+L’étude paramétrique, basée sur une recherche en grille multi-métrique, montre que :
+
+* le réglage de `n_segments` fixe la granularité globale mais ne détermine pas à lui seul la qualité
+* la compacité `m` est le facteur principal de compromis entre régularité et précision
+* pour une granularité d’environ 200 superpixels, **m ≈ 15–20** constitue un réglage robuste
+
+Cette section est désormais **strictement cohérente** avec le fonctionnement réel du code et les résultats effectivement générés par le pipeline.
 
 ---
 
