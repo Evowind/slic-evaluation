@@ -1,7 +1,7 @@
 # Méthodes d'extraction de superpixels : SLIC & SLIC IPOL
 
 **Projet M2 VMI - Modélisation de systèmes intelligents**  
-**Méthode 1 (SLIC & SLIC IPOL)**  
+**Etudiant 1: (SLIC & SLIC IPOL)**  
 
 ---
 
@@ -23,8 +23,8 @@ Ce dépôt contient l'implémentation et l'évaluation de **deux variantes de la
 1. **SLIC original** (Achanta et al., 2012)
 2. **SLIC IPOL** (Gay et al., 2022) - version améliorée
 
-**Note importante** : Ce dépôt est une copie extraite du projet complet développé en collaboration (Etudiant 1 & Etudiant 2), disponible sur : https://github.com/Evowind/slic-hierarchical-superpixels  
-Cette version contient uniquement les implémentations SLIC et SLIC IPOL développées par l'Etudiant 1.
+**Note importante** : Ce dépôt est une copie extraite du projet complet développé en collaboration (Yanis & Samy), disponible sur : https://github.com/Evowind/slic-hierarchical-superpixels  
+Cette version contient uniquement les implémentations SLIC et SLIC IPOL développées par Samy.
 
 ---
 
@@ -46,12 +46,6 @@ Image Processing On Line (IPOL), 2022
 - Meilleure garantie de connectivité via propagation guidée par distance (Dijkstra)
 - Gestion optimisée des pixels orphelins (adoption par similarité couleur)
 - Gradient preconditioning flexible (fenêtres variables)
-
-### Application satellite
-**Hierarchical Superpixel Segmentation via Structural Information Theory**  
-[arXiv:2411.17922v2](https://arxiv.org/html/2411.17922v2)
-
-Démontre l'importance des superpixels pour l'imagerie satellite où les contraintes computationnelles et la résolution nécessitent des approches efficaces.
 
 ---
 
@@ -156,23 +150,102 @@ Configuration : n_segments=200, compactness=10, 10 itérations
 
 ---
 
-## Evaluation qualitative (10 testeurs)
+## Evaluation qualitative (11 testeurs)
 
-**Protocole** : 10 testeurs de la promotion VMI ont évalué visuellement 15 paires d'images (SLIC vs SLIC IPOL) selon 3 critères :
+**Protocole** : 11 testeurs (étudiants et enseignants en Vision par Ordinateur) ont évalué 5 images avec les 3 méthodes (SLIC, SLIC_IPOL, SIT-HSS) selon plusieurs critères :
 
-1. **Adhérence aux contours** : Les superpixels respectent-ils les frontières naturelles ?
-2. **Régularité visuelle** : Les superpixels sont-ils uniformes ?
-3. **Qualité globale** : Préférence générale
+1. **Qualité des contours** : Respect des frontières naturelles des objets (échelle 1-5)
+2. **Régularité et uniformité** : Homogénéité de taille et forme des superpixels (échelle 1-5)
+3. **Cohérence chromatique** : Similarité des couleurs au sein d'un superpixel (échelle 1-5)
+4. **Équilibre global** : Meilleure méthode pour chaque image
 
-**Résultats** :
+### Résultats détaillés
 
-| Critère | SLIC Original | SLIC IPOL | Ex-aequo |
-|---------|---------------|-----------|----------|
-| Adhérence contours | 23% | 68% | 9% |
-| Régularité | 31% | 61% | 8% |
-| Qualité globale | 27% | 65% | 8% |
+**Profil des testeurs** :
+- 8 étudiants/chercheurs en Vision par Ordinateur (73%)
+- 3 personnes d'autres spécialités (27%)
+- 5 avec expérience préalable en superpixels (45%)
+- 6 sans expérience préalable (55%)
 
-**Conclusion qualitative** : SLIC IPOL est largement préféré par les testeurs humains, confirmant les métriques quantitatives.
+**Scores moyens par méthode (échelle 1-5)** :
+
+| Critère | SLIC | SLIC_IPOL | SIT-HSS |
+|---------|------|-----------|---------|
+| Qualité des contours | 3.25 | 3.35 | 3.75 |
+| Régularité/Uniformité | 3.42 | 3.36 | 3.25 |
+| Cohérence chromatique | 3.29 | 3.25 | 3.64 |
+| **Moyenne générale** | **3.32** | **3.32** | **3.55** |
+
+**Préférences globales** :
+
+Classement final (1 = meilleur, 3 = moins bon) :
+- **SIT-HSS** : Rang moyen **1.45** (6 votes en 1ère position)
+- **SLIC** : Rang moyen **2.00** (3 votes en 1ère position)
+- **SLIC_IPOL** : Rang moyen **2.55** (2 votes en 1ère position)
+
+**Meilleur équilibre par image** (55 évaluations totales) :
+- **SIT-HSS** : 30 votes (54.5%)
+- **SLIC** : 10 votes (18.2%)
+- **SLIC_IPOL** : 10 votes (18.2%)
+- **Aucune/Égalité** : 5 votes (9.1%)
+
+### Analyse spécifique SLIC vs SLIC_IPOL
+
+**Comparaison directe** (en excluant SIT-HSS) :
+
+| Critère | SLIC meilleur | SLIC_IPOL meilleur | Équivalent |
+|---------|---------------|-------------------|------------|
+| Respect des contours | 27% | 36% | 37% |
+| Régularité | 36% | 27% | 37% |
+| Cohérence chromatique | 27% | 27% | 46% |
+
+**Recommandation SLIC_IPOL en remplacement de SLIC** :
+- **Oui recommandé** : 4 testeurs (36%)
+  - "Meilleurs contours" (2 mentions)
+  - "Gain de temps considérable" (1 mention)
+  - "Reproduit les résultats d'une meilleure façon" (1 mention)
+- **Non recommandé** : 1 testeur (9%)
+  - "Moins bien en tout, moyen dans l'ensemble"
+- **Dépend du contexte** : 6 testeurs (55%)
+
+### Commentaires qualitatifs clés
+
+**Points forts SLIC** :
+- "Bon équilibre général"
+- "Fond le plus détaillé"
+- "Couleurs vives"
+
+**Points forts SLIC_IPOL** :
+- "Meilleurs contours sur certaines images"
+- "Bonne perception 3D du paysage"
+- "Seul à distinguer certains détails fins"
+
+**Points forts SIT-HSS** :
+- "Plus fidèle à la réalité" (3 mentions)
+- "Meilleure distinction des contours d'objets"
+- "Plus de détails et précision"
+- "Meilleur contraste de couleurs"
+
+**Limitations observées** :
+- SLIC : "Fusion d'éléments distincts", "contours extérieurs flous"
+- SLIC_IPOL : "Moins de détails que les autres", "objets circulaires troués"
+- SIT-HSS : "Trop focalisé sur petits détails parfois", "peut être inefficace sur certains cas"
+
+### Applications suggérées par les testeurs
+
+- **Imagerie satellite** (4 mentions) : détection d'avions, captioning
+- **Traitement artistique** : peinture à l'huile, art abstrait
+- **Analyse médicale** : simulation de troubles visuels (myopie, cataracte)
+- **Analyse picturale** : fractionnement de tableaux, étude de composition
+
+### Conclusion qualitative
+
+1. **SIT-HSS domine globalement** avec 54.5% de préférence, mais avec réserves sur la vitesse
+2. **SLIC et SLIC_IPOL sont équivalents** en moyenne (3.32 vs 3.32)
+3. **SLIC légèrement meilleur en régularité** (+0.06 point)
+4. **SLIC_IPOL légèrement meilleur en contours** (+0.10 point)
+5. **Consensus : "Dépend de l'image"** - aucune méthode universellement supérieure entre SLIC/IPOL
+6. **Clarté de l'évaluation** : 4.27/5 en moyenne - protocole bien compris
 
 ---
 
