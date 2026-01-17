@@ -1,0 +1,114 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.pyc
+*.pyo
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.egg-info/
+dist/
+build/
+
+# PyInstaller
+#  Usually these files are written by a boot wrapper
+#  and we don't want to give users the impression
+#  that they should run their application by running
+#  "python" in the distribute directory, nor that they
+#  should edit files in that directory to achieve
+#  additional functionality.
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-debug.log
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+*.cover
+nosetests.xml
+coverage.xml
+
+# Translations
+locale/
+
+# Django stuff:
+local_settings.py
+
+# Flask stuff:
+instance/
+.webassets-cache
+
+# Scrapy stuff:
+.scrapy
+
+# Sphinx documentation
+docs/_build
+
+# PyBuilder
+target
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# pipenv
+.Pipfile.lock
+.env
+.venv
+/env/
+
+# pycache
+__pycache__/
+
+# mypyc
+.mypy_cache/
+
+
+# Package dists
+# Packages can contain any kind of file, but usually
+# consist of pure Python code (i.e., not an executable)
+# and are used to distribute code in a manageable
+# form. Package dists include the package code, as well
+# as any dependent packages needed to run the package.
+# Usually created using the distutils module.
+#
+# This is not intended to refer to the kind of package
+# that you "dist" using the distutils module (although
+# that type of package can contain pure Python code).
+#
+# Instead, it refers to the kind of file that contains
+# pure python code and is used to distribute that code.
+# Do not confuse this type of package with the type of
+# package that you "dist" using the distutils module,
+# which can contain any kind of file (i.e., not just
+# pure Python code).
+*.egg-info/
+*.egg
+*.whl
+*.tar.gz
+*.zip
+*.bz2
+*.tar
+*.tar.bz2
+*.tbz
+*.tbz2
+*.tz
+*.tar.xz
+*.exe
+
+# Python wrappers for databases
+# Wrapper code for SQLite (and other) databases
+# to be bundled with a Python package.
+*.sqlite3
+
+# Bundled biometric authentication packages
+# Packages like PyFingerprint and fingerprint-gui
+# contain code to handle biometric authentication.
+# Some projects may want to include this code in their
+# package, in which case it needs to be whitelisted.
+*.finger
