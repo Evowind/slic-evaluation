@@ -93,66 +93,120 @@ où :
 
 ### Comparaison visuelle
 
-**Image BSDS500 - 107045.jpg**
+**Image BSDS500 – 107045.jpg**
 
-Configuration : n_segments=200, compactness=10, 10 itérations
+Configuration : n_segments ≈ 200, compactness = 10, 10 itérations
 
 ![Comparaison SLIC vs SLIC IPOL](results/slic/comparison/107045_comparison.png)
 
 **Observations** :
-- SLIC IPOL produit des contours plus réguliers
-- Meilleure adhérence aux frontières naturelles de l'image
-- Superpixels plus compacts et homogènes
+
+* Les deux méthodes produisent des superpixels visuellement comparables
+* SLIC IPOL génère légèrement plus de superpixels que la version originale
+* Les différences de régularité visuelle restent modestes et dépendent fortement des zones de l’image
+
+Aucune supériorité visuelle nette et systématique de SLIC IPOL n’est observable sur cet exemple isolé.
+
+---
 
 ### Métriques quantitatives
 
-**Sans Ground Truth** (métriques intrinsèques) :
+#### Sans Ground Truth (métriques intrinsèques)
 
-| Métrique | SLIC Original | SLIC IPOL | Meilleur |
-|----------|---------------|-----------|----------|
-| Compacité | 0.7234 | 0.7581 | IPOL |
-| Régularité | 0.8123 | 0.8456 | IPOL |
-| Global Regularity | 0.7891 | 0.8102 | IPOL |
+| Métrique          | SLIC Original | SLIC IPOL | Meilleur |
+| ----------------- | ------------- | --------- | -------- |
+| Compacité         | 0.4122        | 0.4555    | IPOL     |
+| Régularité        | 0.6964        | 0.6870    | Original |
+| Global Regularity | 0.8220        | 0.8069    | Original |
 
-**Avec Ground Truth BSDS500** :
+**Analyse** :
 
-| Métrique | SLIC Original | SLIC IPOL | Meilleur |
-|----------|---------------|-----------|----------|
-| Boundary Recall (BR) | 0.7456 | 0.7823 | IPOL |
-| Under-segmentation Error (UE) | 0.1834 | 0.1567 | IPOL |
-| Achievable Seg. Accuracy (ASA) | 0.9234 | 0.9401 | IPOL |
-| Precision (P) | 0.6891 | 0.7234 | IPOL |
-| Contour Density (CD) | 1.12 | 1.05 | IPOL |
+* SLIC IPOL améliore clairement la compacité
+* La régularité et la régularité globale sont légèrement inférieures à la version originale
+* Les gains ne sont donc pas uniformes sur les métriques intrinsèques
 
-**Temps d'exécution** (image 481x321) :
-- SLIC Original : 0.127s
-- SLIC IPOL : 0.145s (+14% surcoût acceptable)
+---
+
+#### Avec Ground Truth BSDS500
+
+| Métrique                       | SLIC Original | SLIC IPOL | Meilleur |
+| ------------------------------ | ------------- | --------- | -------- |
+| Boundary Recall (BR)           | 0.7669        | 0.7452    | Original |
+| Under-segmentation Error (UE)  | 0.6267        | 0.5764    | IPOL     |
+| Corrected UE                   | 0.6233        | 0.5764    | IPOL     |
+| Achievable Seg. Accuracy (ASA) | 0.9121        | 0.9262    | IPOL     |
+| Precision (P)                  | 0.0684        | 0.0690    | IPOL     |
+| Contour Density (CD)           | 5.4897        | 5.1577    | IPOL     |
+| Explained Variation            | 0.9052        | 0.9204    | IPOL     |
+
+**Analyse** :
+
+* SLIC IPOL réduit significativement l’under-segmentation
+* L’ASA et l’Explained Variation sont améliorées
+* En revanche, le Boundary Recall diminue, indiquant une moins bonne couverture des contours de référence
+* Les gains sont donc orientés vers la qualité régionale plutôt que la détection fine des frontières
+
+---
+
+### Temps d’exécution
+
+Image : 481 × 321
+
+* SLIC Original : 4.371 s
+* SLIC IPOL : 1.512 s
+
+Soit une réduction du temps d’exécution d’environ **65 %**, ce qui constitue l’amélioration la plus nette et la plus robuste de SLIC IPOL.
+
+---
 
 ### Étude paramétrique
 
-**Impact du nombre de superpixels (n_segments)** :
+#### Impact du nombre de superpixels (n_segments)
 
-![Étude n_segments](results/slic/parameters/n_segments_metrics.png)
+![Étude n\_segments](results/slic/parameters/n_segments_metrics.png)
 
 **Observations** :
-- BR augmente avec n (meilleure capture des détails)
-- UE diminue avec n (moins de débordement)
-- Compacité stable (peu dépendante de n)
 
-**Impact de la compacité (m)** :
+* L’augmentation du nombre de superpixels améliore l’ASA et réduit l’under-segmentation
+* Le Boundary Recall ne progresse pas nécessairement de manière monotone
+* La régularité globale reste sensible aux variations de n
+
+---
+
+#### Impact de la compacité (m)
 
 ![Étude compactness](results/slic/parameters/compactness_metrics.png)
 
 **Observations** :
-- m élevé → superpixels très réguliers mais moins précis sur contours
-- m faible → meilleure adhérence mais formes irrégulières
-- Optimum typique : m ∈ [10, 20]
+
+* Une compacité élevée favorise des superpixels réguliers mais dégrade l’adhérence aux contours
+* Une compacité faible améliore l’alignement avec les frontières au prix d’une structure plus irrégulière
+* Un compromis raisonnable se situe autour de m ≈ 10–15, sans optimum universel
+
+---
+
+### Conclusion synthétique
+
+SLIC IPOL n’est pas strictement supérieur à SLIC sur toutes les métriques.
+Ses avantages principaux sont :
+
+* une **accélération majeure**
+* une **meilleure compacité**
+* une **réduction de l’under-segmentation**
+
+En contrepartie :
+
+* la **régularité globale**
+* et le **Boundary Recall**
+
+sont légèrement dégradés.
+Le choix entre SLIC et SLIC IPOL dépend donc clairement de la priorité donnée soit à la vitesse et à la cohérence régionale, soit à la précision des contours.
 
 ---
 
 ## Evaluation qualitative (11 testeurs)
 
-**Protocole** : 11 testeurs (étudiants et enseignants en Vision par Ordinateur) ont évalué 5 images avec les 3 méthodes (SLIC, SLIC_IPOL, SIT-HSS) selon plusieurs critères :
+**Protocole** : 11 testeurs ont évalué 5 images avec les 3 méthodes (SLIC, SLIC_IPOL, SIT-HSS) selon plusieurs critères :
 
 1. **Qualité des contours** : Respect des frontières naturelles des objets (échelle 1-5)
 2. **Régularité et uniformité** : Homogénéité de taille et forme des superpixels (échelle 1-5)
@@ -162,7 +216,7 @@ Configuration : n_segments=200, compactness=10, 10 itérations
 ### Résultats détaillés
 
 **Profil des testeurs** :
-- 8 étudiants/chercheurs en Vision par Ordinateur (73%)
+- 8 étudiants en Vision par Ordinateur (73%)
 - 3 personnes d'autres spécialités (27%)
 - 5 avec expérience préalable en superpixels (45%)
 - 6 sans expérience préalable (55%)
@@ -247,6 +301,8 @@ Classement final (1 = meilleur, 3 = moins bon) :
 5. **Consensus : "Dépend de l'image"** - aucune méthode universellement supérieure entre SLIC/IPOL
 6. **Clarté de l'évaluation** : 4.27/5 en moyenne - protocole bien compris
 
+**Fichier** : `results\human_study\Reponses_au_formulaire.csv`
+
 ---
 
 ## Structure du code
@@ -278,7 +334,7 @@ slic-ipol-implementation/
 │   └── test_slic.py                  # Tests unitaires
 ├── data/
 │   └── BSDS500/                      # Dataset (non inclus)
-├── results/                           # Résultats générés
+├── results/                           # Résultats générés + Etude Humain
 ├── quick_start.py                     # Démo rapide
 └── requirements.txt                   # Dépendances
 ```

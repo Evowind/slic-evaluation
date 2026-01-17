@@ -1,339 +1,241 @@
 """
-Optimisation et analyse des paramètres SLIC
+Parameter tuning rigoureux pour SLIC
+Comparaison multi-métrique, normalisée et contrôlée
 """
+
 import sys
 import os
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
+import time
 import numpy as np
 import matplotlib.pyplot as plt
 from pathlib import Path
-import time
+from itertools import product
 
 from src.methods.slic.slic_original import SLIC
 from src.preprocessing.image_loader import ImageLoader
-from src.evaluation.metrics import compute_all_metrics, compute_metrics_multiple_gt
-from src.evaluation.visualize import plot_parameter_study
+from src.evaluation.metrics import compute_metrics_multiple_gt
 
 
-def study_n_segments(image, ground_truths=None, 
-                    n_segments_values=[50, 100, 200, 400, 800],
-                    compactness=10.0):
+# ------------------------------------------------------------
+# UTILITAIRES
+# ------------------------------------------------------------
+
+def normalize(values, higher_is_better=True, eps=1e-8):
+    values = np.array(values, dtype=np.float64)
+    vmin, vmax = values.min(), values.max()
+
+    if vmax - vmin < eps:
+        return np.ones_like(values)
+
+    norm = (values - vmin) / (vmax - vmin)
+    return norm if higher_is_better else 1.0 - norm
+
+
+def within_tolerance(real, target, tol_ratio=0.1):
+    return abs(real - target) / target <= tol_ratio
+
+
+# ------------------------------------------------------------
+# GRID SEARCH COMPARATIF
+# ------------------------------------------------------------
+
+def grid_search(
+    image,
+    ground_truths,
+    n_segments_values,
+    compactness_values,
+    target_n_segments,
+    n_tol_ratio=0.1,
+    max_iter=10
+):
     """
-    Étudie l'effet du nombre de superpixels.
-    
-    Args:
-        image: Image RGB (H, W, 3)
-        ground_truths: Liste de segmentations GT (optionnel)
-        n_segments_values: Liste des valeurs à tester
-        compactness: Paramètre de compacité fixe
-    
-    Returns:
-        results: Dictionnaire avec labels et métriques
+    Recherche en grille avec :
+    - contrôle du nombre réel de superpixels
+    - score multi-métrique normalisé
+    - pénalisation de la variance
     """
-    print("=" * 60)
-    print("ÉTUDE DU PARAMÈTRE N_SEGMENTS")
-    print("=" * 60)
-    
-    results = {
-        'n_segments_values': n_segments_values,
-        'labels_list': [],
-        'metrics_list': [],
-        'times': []
-    }
-    
-    for n_seg in n_segments_values:
-        print(f"\nTest avec n_segments={n_seg}...")
-        
-        # Mesurer le temps
-        start_time = time.time()
-        
-        # Appliquer SLIC
-        slic = SLIC(n_segments=n_seg, compactness=compactness, max_iter=10)
+
+    print("=" * 70)
+    print("GRID SEARCH COMPARATIF (RIGOUREUX)")
+    print("=" * 70)
+
+    raw_results = []
+
+    for n_seg, comp in product(n_segments_values, compactness_values):
+        print(f"Test n_segments={n_seg}, compactness={comp}")
+
+        start = time.time()
+        slic = SLIC(n_segments=n_seg, compactness=comp, max_iter=max_iter)
         labels = slic.fit(image)
-        
-        elapsed = time.time() - start_time
-        results['times'].append(elapsed)
-        results['labels_list'].append(labels)
-        
-        # Calculer les métriques
-        if ground_truths:
-            metrics = compute_metrics_multiple_gt(labels, ground_truths)
-        else:
-            metrics = compute_all_metrics(labels)
-        
-        results['metrics_list'].append(metrics)
-        
-        print(f"  Temps: {elapsed:.2f}s")
-        print(f"  Nombre réel: {metrics['n_superpixels']}")
-        print(f"  Compacité: {metrics['compactness']:.4f}")
-        if 'boundary_recall' in metrics:
-            print(f"  BR: {metrics['boundary_recall']:.4f}")
-            print(f"  UE: {metrics['under_segmentation_error']:.4f}")
-    
+        elapsed = time.time() - start
+
+        metrics = compute_metrics_multiple_gt(labels, ground_truths)
+
+        n_real = metrics['n_superpixels']
+
+        if not within_tolerance(n_real, target_n_segments, n_tol_ratio):
+            print(f"  Rejeté (n_real={n_real})")
+            continue
+
+        raw_results.append({
+            'params': (n_seg, comp),
+            'time': elapsed,
+            'metrics': metrics
+        })
+
+        print(
+            f"  n_real={n_real}, "
+            f"ASA={metrics['asa']:.4f}, "
+            f"UE={metrics['under_segmentation_error']:.4f}"
+        )
+
+    if len(raw_results) == 0:
+        raise RuntimeError("Aucune configuration valide après filtrage n_superpixels")
+
+    return compute_scores(raw_results)
+
+
+# ------------------------------------------------------------
+# SCORE MULTI-MÉTRIQUE
+# ------------------------------------------------------------
+
+def compute_scores(results):
+    """
+    Calcule un score composite normalisé et stable
+    """
+
+    asa = [r['metrics']['asa'] for r in results]
+    ue = [r['metrics']['under_segmentation_error'] for r in results]
+    cue = [r['metrics']['corrected_under_segmentation_error'] for r in results]
+    ev = [r['metrics']['explained_variation'] for r in results]
+    br = [r['metrics']['boundary_recall'] for r in results]
+
+    asa_std = [r['metrics']['asa_std'] for r in results]
+    ue_std = [r['metrics']['under_segmentation_error_std'] for r in results]
+    br_std = [r['metrics']['boundary_recall_std'] for r in results]
+
+    time_vals = [r['time'] for r in results]
+
+    # Normalisation
+    asa_n = normalize(asa, True)
+    ev_n = normalize(ev, True)
+    br_n = normalize(br, True)
+
+    ue_n = normalize(ue, False)
+    cue_n = normalize(cue, False)
+
+    asa_std_n = normalize(asa_std, False)
+    ue_std_n = normalize(ue_std, False)
+    br_std_n = normalize(br_std, False)
+
+    time_n = normalize(time_vals, False)
+
+    for i, r in enumerate(results):
+        score = (
+            1.5 * asa_n[i] +
+            1.0 * ev_n[i] +
+            0.5 * br_n[i] +
+            1.0 * ue_n[i] +
+            0.5 * cue_n[i] +
+            0.5 * asa_std_n[i] +
+            0.5 * ue_std_n[i] +
+            0.25 * br_std_n[i] +
+            0.5 * time_n[i]
+        )
+
+        r['score'] = score
+
+    results.sort(key=lambda x: x['score'], reverse=True)
+
     return results
 
 
-def study_compactness(image, ground_truths=None,
-                     compactness_values=[1, 5, 10, 20, 40],
-                     n_segments=200):
-    """
-    Étudie l'effet du paramètre de compacité.
-    
-    Args:
-        image: Image RGB (H, W, 3)
-        ground_truths: Liste de segmentations GT (optionnel)
-        compactness_values: Liste des valeurs à tester
-        n_segments: Nombre de superpixels fixe
-    
-    Returns:
-        results: Dictionnaire avec labels et métriques
-    """
-    print("=" * 60)
-    print("ÉTUDE DU PARAMÈTRE COMPACTNESS")
-    print("=" * 60)
-    
-    results = {
-        'compactness_values': compactness_values,
-        'labels_list': [],
-        'metrics_list': [],
-        'times': []
-    }
-    
-    for comp in compactness_values:
-        print(f"\nTest avec compactness={comp}...")
-        
-        start_time = time.time()
-        
-        slic = SLIC(n_segments=n_segments, compactness=comp, max_iter=10)
-        labels = slic.fit(image)
-        
-        elapsed = time.time() - start_time
-        results['times'].append(elapsed)
-        results['labels_list'].append(labels)
-        
-        if ground_truths:
-            metrics = compute_metrics_multiple_gt(labels, ground_truths)
-        else:
-            metrics = compute_all_metrics(labels)
-        
-        results['metrics_list'].append(metrics)
-        
-        print(f"  Temps: {elapsed:.2f}s")
-        print(f"  Compacité mesurée: {metrics['compactness']:.4f}")
-        if 'boundary_recall' in metrics:
-            print(f"  BR: {metrics['boundary_recall']:.4f}")
-    
-    return results
+# ------------------------------------------------------------
+# VISUALISATION
+# ------------------------------------------------------------
 
+def visualize_top_k(results, image, k=6):
+    from skimage.segmentation import mark_boundaries
 
-def grid_search(image, ground_truths=None,
-               n_segments_values=[100, 200, 400],
-               compactness_values=[5, 10, 20]):
-    """
-    Recherche en grille des meilleurs paramètres.
-    
-    Args:
-        image: Image RGB (H, W, 3)
-        ground_truths: Liste de segmentations GT (optionnel)
-        n_segments_values: Liste des valeurs de n_segments
-        compactness_values: Liste des valeurs de compactness
-    
-    Returns:
-        results: Dictionnaire avec tous les résultats
-    """
-    print("=" * 60)
-    print("RECHERCHE EN GRILLE")
-    print("=" * 60)
-    print(f"n_segments: {n_segments_values}")
-    print(f"compactness: {compactness_values}")
-    
-    results = {
-        'n_segments_values': n_segments_values,
-        'compactness_values': compactness_values,
-        'grid': {}
-    }
-    
-    best_score = -1
-    best_params = None
-    
-    for n_seg in n_segments_values:
-        for comp in compactness_values:
-            print(f"\nTest: n_segments={n_seg}, compactness={comp}")
-            
-            slic = SLIC(n_segments=n_seg, compactness=comp, max_iter=10)
-            labels = slic.fit(image)
-            
-            if ground_truths:
-                metrics = compute_metrics_multiple_gt(labels, ground_truths)
-                # Score combiné (BR et ASA élevés, UE faible)
-                score = (metrics['boundary_recall'] + metrics['asa'] - 
-                        metrics['under_segmentation_error']) / 2
-            else:
-                metrics = compute_all_metrics(labels)
-                score = metrics['compactness']
-            
-            results['grid'][(n_seg, comp)] = {
-                'labels': labels,
-                'metrics': metrics,
-                'score': score
-            }
-            
-            print(f"  Score: {score:.4f}")
-            
-            if score > best_score:
-                best_score = score
-                best_params = (n_seg, comp)
-    
-    print("\n" + "=" * 60)
-    print("MEILLEURS PARAMÈTRES")
-    print("=" * 60)
-    print(f"n_segments: {best_params[0]}")
-    print(f"compactness: {best_params[1]}")
-    print(f"Score: {best_score:.4f}")
-    
-    results['best_params'] = best_params
-    results['best_score'] = best_score
-    
-    return results
+    k = min(k, len(results))
+    fig, axes = plt.subplots(1, k, figsize=(4 * k, 4))
 
-
-def visualize_parameter_study(results, param_name):
-    """
-    Visualise les résultats d'une étude de paramètre.
-    
-    Args:
-        results: Résultats de l'étude
-        param_name: Nom du paramètre ('n_segments' ou 'compactness')
-    """
-    param_key = f'{param_name}_values'
-    param_values = results[param_key]
-    metrics_list = results['metrics_list']
-    
-    # Graphique des métriques
-    fig = plot_parameter_study(param_name, param_values, metrics_list)
-    
-    # Graphique du temps d'exécution
-    fig_time, ax = plt.subplots(figsize=(8, 5))
-    ax.plot(param_values, results['times'], marker='o', linewidth=2, markersize=8)
-    ax.set_xlabel(param_name)
-    ax.set_ylabel('Temps (secondes)')
-    ax.set_title(f'Temps d\'exécution vs {param_name}')
-    ax.grid(True, alpha=0.3)
-    
-    return fig, fig_time
-
-
-def visualize_grid_search(results, image):
-    """
-    Visualise les résultats de la recherche en grille.
-    
-    Args:
-        results: Résultats de grid_search
-        image: Image originale
-    """
-    n_segments_values = results['n_segments_values']
-    compactness_values = results['compactness_values']
-    
-    n_rows = len(n_segments_values)
-    n_cols = len(compactness_values)
-    
-    fig, axes = plt.subplots(n_rows, n_cols, figsize=(5*n_cols, 5*n_rows))
-    
-    if n_rows == 1:
-        axes = axes.reshape(1, -1)
-    if n_cols == 1:
-        axes = axes.reshape(-1, 1)
-    
     if image.max() > 1.0:
         image = image / 255.0
-    
-    for i, n_seg in enumerate(n_segments_values):
-        for j, comp in enumerate(compactness_values):
-            labels = results['grid'][(n_seg, comp)]['labels']
-            score = results['grid'][(n_seg, comp)]['score']
-            
-            from skimage import segmentation
-            marked = segmentation.mark_boundaries(image, labels, 
-                                                 color=(1, 1, 0), mode='thick')
-            
-            axes[i, j].imshow(marked)
-            axes[i, j].set_title(f'n={n_seg}, m={comp}\nScore: {score:.3f}')
-            axes[i, j].axis('off')
-            
-            # Encadrer les meilleurs paramètres
-            if (n_seg, comp) == results['best_params']:
-                for spine in axes[i, j].spines.values():
-                    spine.set_edgecolor('red')
-                    spine.set_linewidth(4)
-    
+
+    for i in range(k):
+        r = results[i]
+        slic = SLIC(
+            n_segments=r['params'][0],
+            compactness=r['params'][1],
+            max_iter=10
+        )
+        labels = slic.fit(image)
+
+        marked = mark_boundaries(image, labels, mode='thick')
+        axes[i].imshow(marked)
+        axes[i].set_title(
+            f"n={r['params'][0]}, m={r['params'][1]}\nScore={r['score']:.3f}"
+        )
+        axes[i].axis('off')
+
     plt.tight_layout()
     return fig
 
 
+# ------------------------------------------------------------
+# MAIN
+# ------------------------------------------------------------
+
 def main():
-    """
-    Point d'entrée principal.
-    """
     import argparse
-    
-    parser = argparse.ArgumentParser(description='Optimisation des paramètres SLIC')
-    parser.add_argument('--image', type=str, required=True, 
-                       help='Chemin vers l\'image')
-    parser.add_argument('--study', type=str, default='all',
-                       choices=['n_segments', 'compactness', 'grid', 'all'],
-                       help='Type d\'étude à réaliser')
-    parser.add_argument('--save', action='store_true',
-                       help='Sauvegarder les résultats')
-    
+
+    parser = argparse.ArgumentParser("SLIC parameter tuning rigoureux")
+    parser.add_argument('--image', required=True)
+    parser.add_argument('--save', action='store_true')
+
     args = parser.parse_args()
-    
-    # Charger l'image
+
     loader = ImageLoader()
     image = loader.load_image(args.image)
-    print(f"Image chargée: {image.shape}")
-    
-    # Ground truth si disponible (BSDS500)
-    ground_truths = None
-    try:
-        image_name = Path(args.image).stem
-        gt_data = loader.load_bsds500_groundtruth(split='test', image_name=image_name)
-        if gt_data:
-            ground_truths = gt_data[0]
-            print(f"Ground truth chargé: {len(ground_truths)} segmentations")
-    except:
-        print("Pas de ground truth disponible")
-    
-    # Exécuter les études
-    if args.study in ['n_segments', 'all']:
-        results_nseg = study_n_segments(image, ground_truths)
-        fig1, fig2 = visualize_parameter_study(results_nseg, 'n_segments')
-        
-        if args.save:
-            save_dir = Path('results/slic/parameters')
-            save_dir.mkdir(parents=True, exist_ok=True)
-            fig1.savefig(save_dir / 'n_segments_metrics.png', dpi=150, bbox_inches='tight')
-            fig2.savefig(save_dir / 'n_segments_time.png', dpi=150, bbox_inches='tight')
-    
-    if args.study in ['compactness', 'all']:
-        results_comp = study_compactness(image, ground_truths)
-        fig3, fig4 = visualize_parameter_study(results_comp, 'compactness')
-        
-        if args.save:
-            save_dir = Path('results/slic/parameters')
-            save_dir.mkdir(parents=True, exist_ok=True)
-            fig3.savefig(save_dir / 'compactness_metrics.png', dpi=150, bbox_inches='tight')
-            fig4.savefig(save_dir / 'compactness_time.png', dpi=150, bbox_inches='tight')
-    
-    if args.study in ['grid', 'all']:
-        results_grid = grid_search(image, ground_truths)
-        fig5 = visualize_grid_search(results_grid, image)
-        
-        if args.save:
-            save_dir = Path('results/slic/parameters')
-            save_dir.mkdir(parents=True, exist_ok=True)
-            fig5.savefig(save_dir / 'grid_search.png', dpi=150, bbox_inches='tight')
-    
+
+    image_name = Path(args.image).stem
+    gt_data = loader.load_bsds500_groundtruth(
+        split='test',
+        image_name=image_name
+    )
+    ground_truths = gt_data[0]
+
+    results = grid_search(
+        image=image,
+        ground_truths=ground_truths,
+        n_segments_values=[100, 150, 200, 250, 300],
+        compactness_values=[5, 10, 15, 20],
+        target_n_segments=200,
+        n_tol_ratio=0.1
+    )
+
+    print("\n" + "=" * 70)
+    print("TOP 5 CONFIGURATIONS")
+    print("=" * 70)
+
+    for r in results[:5]:
+        print(
+            f"n={r['params'][0]}, m={r['params'][1]}, "
+            f"score={r['score']:.4f}, "
+            f"ASA={r['metrics']['asa']:.4f}, "
+            f"UE={r['metrics']['under_segmentation_error']:.4f}"
+        )
+
+    fig = visualize_top_k(results, image, k=6)
+
+    if args.save:
+        out = Path("results/slic/parameters")
+        out.mkdir(parents=True, exist_ok=True)
+        fig.savefig(out / "grid_search_topk.png", dpi=150, bbox_inches='tight')
+
     plt.show()
 
 
