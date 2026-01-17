@@ -1,0 +1,21 @@
+# Étude comparative de méthodes de superpixels
+
+## Instructions
+Vous allez voir 10 images segmentées par différentes méthodes.
+Pour chaque image, indiquez quelle méthode vous semble la meilleure.
+
+## Exemple d'item
+Image 1 : Paysage urbain
+
+[Image A] [Image B] [Image C]
+
+Quelle segmentation préférez-vous ? 
+○ Méthode A  ○ Méthode B  ○ Méthode C  ○ Équivalent
+
+Pourquoi ? (optionnel)
+[Zone de texte libre]
+
+Pour chaque méthode sur chaque image :
+- Qualité des contours : 1-5
+- Régularité des superpixels : 1-5
+- Pertinence sémantique : 1-5
