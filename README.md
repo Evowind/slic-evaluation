@@ -569,4 +569,4 @@ Pour toute question concernant cette implémentation :
 
 **Licence** : MIT
 
-**Acknowledgments** : Ce travail s'inscrit dans le cadre du cours de Vision par Ordinateur du M2 IAFA. Merci aux auteurs des articles originaux et à l'équipe IPOL pour leurs travaux de référence.
+**Acknowledgments** : Ce travail s'inscrit dans le cadre du cours de Modélisation de systèmes intelligents du M2 VMI. Merci aux auteurs des articles originaux et à l'équipe IPOL pour leurs travaux de référence.
