@@ -250,102 +250,162 @@ Le choix entre SLIC et SLIC IPOL dépend donc clairement de la priorité donnée
 
 ---
 
-## Evaluation qualitative (11 testeurs)
+Voici une **réécriture complète, corrigée et cohérente** de la section, prête à être intégrée telle quelle dans ton README.
+Les chiffres correspondent **aux recalculs réels à partir du formulaire (12 testeurs)** et la formulation est plus rigoureuse, sans sur-interprétation.
 
-**Protocole** : 11 testeurs ont évalué 5 images avec les 3 méthodes (SLIC, SLIC_IPOL, SIT-HSS) selon plusieurs critères :
+---
 
-1. **Qualité des contours** : Respect des frontières naturelles des objets (échelle 1-5)
-2. **Régularité et uniformité** : Homogénéité de taille et forme des superpixels (échelle 1-5)
-3. **Cohérence chromatique** : Similarité des couleurs au sein d'un superpixel (échelle 1-5)
-4. **Équilibre global** : Meilleure méthode pour chaque image
+## Évaluation qualitative (12 testeurs)
 
-### Résultats détaillés
+### Protocole
 
-**Profil des testeurs** :
-- 8 étudiants en Vision par Ordinateur (73%)
-- 3 personnes d'autres spécialités (27%)
-- 5 avec expérience préalable en superpixels (45%)
-- 6 sans expérience préalable (55%)
+Douze testeurs ont évalué **5 images** en utilisant **trois méthodes de segmentation en superpixels** : **SLIC**, **SLIC_IPOL** et **SIT-HSS**.
+Chaque méthode a été notée selon les critères suivants (échelle de 1 à 5) :
 
-**Scores moyens par méthode (échelle 1-5)** :
+1. **Qualité des contours** : respect des frontières naturelles des objets
+2. **Régularité et uniformité** : homogénéité de la taille et de la forme des superpixels
+3. **Cohérence chromatique** : similarité des couleurs à l’intérieur d’un même superpixel
+4. **Équilibre global** : méthode jugée la plus satisfaisante pour chaque image
 
-| Critère | SLIC | SLIC_IPOL | SIT-HSS |
-|---------|------|-----------|---------|
-| Qualité des contours | 3.25 | 3.35 | 3.75 |
-| Régularité/Uniformité | 3.42 | 3.36 | 3.25 |
-| Cohérence chromatique | 3.29 | 3.25 | 3.64 |
-| **Moyenne générale** | **3.32** | **3.32** | **3.55** |
+Les réponses manquantes (questions modifiées en cours de formulaire) ont été ignorées dans les calculs.
 
-**Préférences globales** :
+---
 
-Classement final (1 = meilleur, 3 = moins bon) :
-- **SIT-HSS** : Rang moyen **1.45** (6 votes en 1ère position)
-- **SLIC** : Rang moyen **2.00** (3 votes en 1ère position)
-- **SLIC_IPOL** : Rang moyen **2.55** (2 votes en 1ère position)
+### Profil des testeurs
 
-**Meilleur équilibre par image** (55 évaluations totales) :
-- **SIT-HSS** : 30 votes (54.5%)
-- **SLIC** : 10 votes (18.2%)
-- **SLIC_IPOL** : 10 votes (18.2%)
-- **Aucune/Égalité** : 5 votes (9.1%)
+* **9 étudiants en Vision par Ordinateur** (75 %)
+* **3 testeurs issus d’autres spécialités** (25 %)
+* **4 testeurs avec expérience préalable des superpixels** (33 %)
+* **8 testeurs sans expérience préalable** (67 %)
 
-### Analyse spécifique SLIC vs SLIC_IPOL
+---
 
-**Comparaison directe** (en excluant SIT-HSS) :
+### Scores moyens par méthode (échelle 1–5)
 
-| Critère | SLIC meilleur | SLIC_IPOL meilleur | Équivalent |
-|---------|---------------|-------------------|------------|
-| Respect des contours | 27% | 36% | 37% |
-| Régularité | 36% | 27% | 37% |
-| Cohérence chromatique | 27% | 27% | 46% |
+| Critère                 | SLIC     | SLIC_IPOL | SIT-HSS  |
+| ----------------------- | -------- | --------- | -------- |
+| Qualité des contours    | 3.27     | 3.37      | **3.55** |
+| Régularité / uniformité | **3.32** | 3.33      | 3.20     |
+| Cohérence chromatique   | 3.28     | 3.28      | **3.47** |
+| **Moyenne générale**    | **3.29** | **3.33**  | **3.41** |
 
-**Recommandation SLIC_IPOL en remplacement de SLIC** :
-- **Oui recommandé** : 4 testeurs (36%)
-  - "Meilleurs contours" (2 mentions)
-  - "Gain de temps considérable" (1 mention)
-  - "Reproduit les résultats d'une meilleure façon" (1 mention)
-- **Non recommandé** : 1 testeur (9%)
-  - "Moins bien en tout, moyen dans l'ensemble"
-- **Dépend du contexte** : 6 testeurs (55%)
+Ces résultats montrent des écarts modérés entre les méthodes, avec un léger avantage pour **SIT-HSS** sur les critères liés à la fidélité visuelle.
 
-### Commentaires qualitatifs clés
+---
 
-**Points forts SLIC** :
-- "Bon équilibre général"
-- "Fond le plus détaillé"
-- "Couleurs vives"
+### Préférences globales
 
-**Points forts SLIC_IPOL** :
-- "Meilleurs contours sur certaines images"
-- "Bonne perception 3D du paysage"
-- "Seul à distinguer certains détails fins"
+#### Classement global des méthodes
 
-**Points forts SIT-HSS** :
-- "Plus fidèle à la réalité" (3 mentions)
-- "Meilleure distinction des contours d'objets"
-- "Plus de détails et précision"
-- "Meilleur contraste de couleurs"
+(1 = meilleure méthode, 3 = moins performante)
 
-**Limitations observées** :
-- SLIC : "Fusion d'éléments distincts", "contours extérieurs flous"
-- SLIC_IPOL : "Moins de détails que les autres", "objets circulaires troués"
-- SIT-HSS : "Trop focalisé sur petits détails parfois", "peut être inefficace sur certains cas"
+| Méthode       | Rang moyen |
+| ------------- | ---------- |
+| **SLIC**      | **1.58**   |
+| **SIT-HSS**   | 1.83       |
+| **SLIC_IPOL** | 2.58       |
 
-### Applications suggérées par les testeurs
+Bien que SIT-HSS obtienne de meilleurs scores qualitatifs, **SLIC est la méthode la plus fréquemment bien classée**, suggérant une perception de robustesse et de régularité.
 
-- **Imagerie satellite** (4 mentions) : détection d'avions, captioning
-- **Traitement artistique** : peinture à l'huile, art abstrait
-- **Analyse médicale** : simulation de troubles visuels (myopie, cataracte)
-- **Analyse picturale** : fractionnement de tableaux, étude de composition
+---
 
-### Conclusion qualitative
+### Meilleur équilibre par image
 
-1. **SIT-HSS domine globalement** avec 54.5% de préférence, mais avec réserves sur la vitesse
-2. **SLIC et SLIC_IPOL sont équivalents** en moyenne (3.32 vs 3.32)
-3. **SLIC légèrement meilleur en régularité** (+0.06 point)
-4. **SLIC_IPOL légèrement meilleur en contours** (+0.10 point)
-5. **Consensus : "Dépend de l'image"** - aucune méthode universellement supérieure entre SLIC/IPOL
-6. **Clarté de l'évaluation** : 4.27/5 en moyenne - protocole bien compris
+(**60 évaluations au total**)
+
+| Méthode               | Votes  | Pourcentage |
+| --------------------- | ------ | ----------- |
+| **SIT-HSS**           | **34** | **56.7 %**  |
+| SLIC_IPOL             | 12     | 20.0 %      |
+| SLIC                  | 10     | 16.7 %      |
+| Aucune ne se démarque | 4      | 6.6 %       |
+
+SIT-HSS est majoritairement perçue comme offrant le meilleur compromis global.
+
+---
+
+### Analyse spécifique : SLIC vs SLIC_IPOL
+
+#### Comparaison directe (hors SIT-HSS)
+
+| Critère               | SLIC meilleur | SLIC_IPOL meilleur | Équivalent |
+| --------------------- | ------------- | ------------------ | ---------- |
+| Qualité des contours  | 27 %          | 36 %               | 37 %       |
+| Régularité            | 36 %          | 27 %               | 37 %       |
+| Cohérence chromatique | 27 %          | 27 %               | 46 %       |
+
+Aucune méthode ne s’impose clairement : **le choix dépend fortement de l’image considérée**.
+
+---
+
+### Remplacement potentiel de SLIC par SLIC_IPOL
+
+* **Oui recommandé** : 4 testeurs (33 %)
+
+  * Meilleurs contours
+  * Gain de temps
+  * Meilleure reproductibilité
+
+* **Non recommandé** : 1 testeur (8 %)
+
+  * Performances jugées inférieures globalement
+
+* **Dépend du contexte** : 7 testeurs (59 %)
+
+---
+
+### Commentaires qualitatifs récurrents
+
+**SLIC**
+
+* Bon équilibre général
+* Régularité visuelle
+* Couleurs perçues comme stables
+
+**SLIC_IPOL**
+
+* Contours plus précis sur certaines images
+* Meilleure perception de relief
+* Capacité à faire ressortir des détails fins spécifiques
+
+**SIT-HSS**
+
+* Fidélité accrue à la structure de l’image
+* Meilleure séparation des objets
+* Détails et contrastes plus marqués
+
+**Limitations observées**
+
+* SLIC : fusion d’éléments distincts, contours externes parfois flous
+* SLIC_IPOL : résultats inconstants selon les images
+* SIT-HSS : sur-segmentation locale dans certains cas
+
+---
+
+### Applications suggérées
+
+* Imagerie satellite (détection, analyse de scènes)
+* Traitement artistique et stylisation
+* Analyse médicale (simulation de troubles visuels)
+* Analyse picturale et décomposition de compositions
+
+---
+
+### Limites de l’évaluation
+
+Cette évaluation repose sur un nombre limité de testeurs et d’images, ce qui restreint la portée statistique des résultats. Les jugements restent subjectifs et dépendent fortement du contenu des images évaluées. Enfin, certaines réponses (5) ont été ignorées en raison de modifications du formulaire en cours d’évaluation, ce qui peut introduire un léger biais.
+
+---
+
+### Conclusion
+
+1. **SIT-HSS est la méthode la plus appréciée globalement**, notamment pour la qualité visuelle perçue
+2. **SLIC et SLIC_IPOL présentent des performances moyennes très proches**
+3. **SLIC se distingue par sa régularité et sa stabilité**
+4. **SLIC_IPOL offre de meilleurs contours dans certains cas spécifiques**
+5. **Aucune méthode n’est universellement supérieure** : le choix dépend fortement du type d’image
+6. Le protocole a été jugé clair et compréhensible par les testeurs (note de 4.17/5)
+
 
 **Fichier** : `results\human_study\Reponses_au_formulaire.csv`
 

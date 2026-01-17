@@ -1,7 +1,7 @@
-# Étude comparative de méthodes de superpixels
+# Structure Étude comparative de méthodes de superpixels
 
 ## Instructions
-Vous allez voir 10 images segmentées par différentes méthodes.
+Vous allez voir 5 images segmentées par différentes méthodes.
 Pour chaque image, indiquez quelle méthode vous semble la meilleure.
 
 ## Exemple d'item
@@ -19,3 +19,5 @@ Pour chaque méthode sur chaque image :
 - Qualité des contours : 1-5
 - Régularité des superpixels : 1-5
 - Pertinence sémantique : 1-5
+
+Lien https://forms.gle/C1d7H6hiTNqG9F2P7
