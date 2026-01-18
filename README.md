@@ -1,13 +1,14 @@
 # Méthodes d'extraction de superpixels : SLIC & SLIC IPOL
 
 **Projet M2 VMI - Modélisation de systèmes intelligents**  
-**Etudiant 1: (SLIC & SLIC IPOL)**  
+**Etudiant 1: Samy (SLIC & SLIC IPOL)**  
 
 ---
 
 ## Présentation du sujet
 
-Ce projet s'inscrit dans le cadre d'une étude comparative sur les **méthodes d'extraction de superpixels**. Les superpixels sont des regroupements de pixels adjacents partageant des caractéristiques visuelles similaires (couleur, texture). Ils constituent une représentation intermédiaire entre les pixels bruts et la segmentation sémantique complète.
+Dans ce projet, nous comparons plusieurs méthodes d’extraction de superpixels, utilisées comme étape intermédiaire en vision par ordinateur.
+Les superpixels regroupent des pixels voisins aux propriétés visuelles similaires et permettent de passer d’une représentation pixel par pixel à une segmentation plus compacte et exploitable.
 
 ### Contexte et motivation
 
@@ -269,9 +270,6 @@ L’étude paramétrique, basée sur une recherche en grille multi-métrique, mo
 * le réglage de `n_segments` fixe la granularité globale mais ne détermine pas à lui seul la qualité
 * la compacité `m` est le facteur principal de compromis entre régularité et précision
 * pour une granularité d’environ 200 superpixels, **m ≈ 15–20** constitue un réglage robuste
-
-Cette section est désormais **strictement cohérente** avec le fonctionnement réel du code et les résultats effectivement générés par le pipeline.
-
 ---
 
 ### Synthèse comparative : SLIC vs SLIC IPOL
@@ -325,7 +323,7 @@ Les réponses manquantes (questions modifiées en cours de formulaire) ont été
 | Cohérence chromatique   | 3.28     | 3.28      | **3.47** |
 | **Moyenne générale**    | **3.29** | **3.33**  | **3.41** |
 
-Ces résultats montrent des écarts modérés entre les méthodes, avec un léger avantage pour **SIT-HSS** sur les critères liés à la fidélité visuelle.
+Ces résultats montrent des écarts modérés entre les méthodes, avec un léger avantage pour **SIT-HSS** sur les critères liés à la fidélité visuelle et des contours.
 
 ---
 
@@ -447,6 +445,42 @@ Cette évaluation repose sur un nombre limité de testeurs et d’images, ce qui
 
 ---
 
+## Comparaison avec IPOL online
+
+Nous avons comparé notre implémentation avec la version officielle disponible sur [IPOL](https://www.ipol.im/pub/art/2022/373/).
+
+**Validation** :
+- Différence moyenne sur métriques : < 2%
+- Résultats visuels quasi-identiques
+- Notre implémentation est 5-10% plus lente (Python pur vs C++ optimisé IPOL)
+
+---
+
+## Conclusion
+
+### Synthèse des résultats
+
+1. **SLIC IPOL supérieur à SLIC original** sur tous les critères évalués
+2. **Surcoût computational acceptable** (+14%) pour gains significatifs en qualité
+3. **Validation expérimentale** : métriques quantitatives + évaluation humaine convergent
+4. **Paramètres optimaux** : n_segments ∈ [200, 400], compactness ∈ [10, 15]
+
+### Pertinence à l'ère de l'IA
+
+Les superpixels restent pertinents car :
+- **Complémentarité avec DL** : prétraitement pour Graph Neural Networks
+- **Interprétabilité** : compréhension des décisions (XAI)
+- **Efficacité** : ressources limitées (edge computing, satellite)
+- **Apprentissage faible** : annotations coûteuses
+
+### Perspectives
+
+- Intégration dans pipelines deep learning (superpixel pooling)
+- Extension aux vidéos (cohérence temporelle)
+- Optimisation GPU pour temps réel
+- Adaptation pour imagerie médicale/satellite
+
+---
 ## Structure du code
 
 ```
@@ -480,7 +514,6 @@ slic-ipol-implementation/
 ├── quick_start.py                     # Démo rapide
 └── requirements.txt                   # Dépendances
 ```
-
 ---
 
 ## Installation et utilisation
@@ -539,63 +572,6 @@ python experiments/parameter_tuning.py \
     --image data/BSDS500/data/images/test/107045.jpg \
     --study grid
 ```
-
-**4. Utilisation dans votre code**
-
-```python
-from src.methods.slic.slic_original import SLIC
-from src.methods.slic.slic_ipol import SLIC_IPOL
-from PIL import Image
-import numpy as np
-
-# Charger image
-image = np.array(Image.open('image.jpg'))
-
-# SLIC Original
-slic = SLIC(n_segments=200, compactness=10)
-labels_original = slic.fit(image)
-
-# SLIC IPOL
-slic_ipol = SLIC_IPOL(n_segments=200, compactness=10)
-labels_ipol = slic_ipol.fit(image)
-```
-
----
-
-## Comparaison avec IPOL online
-
-Nous avons comparé notre implémentation avec la version officielle disponible sur [IPOL](https://www.ipol.im/pub/art/2022/373/).
-
-**Validation** :
-- Différence moyenne sur métriques : < 2%
-- Résultats visuels quasi-identiques
-- Notre implémentation est 5-10% plus lente (Python pur vs C++ optimisé IPOL)
-
----
-
-## Conclusion
-
-### Synthèse des résultats
-
-1. **SLIC IPOL supérieur à SLIC original** sur tous les critères évalués
-2. **Surcoût computational acceptable** (+14%) pour gains significatifs en qualité
-3. **Validation expérimentale** : métriques quantitatives + évaluation humaine convergent
-4. **Paramètres optimaux** : n_segments ∈ [200, 400], compactness ∈ [10, 15]
-
-### Pertinence à l'ère de l'IA
-
-Les superpixels restent pertinents car :
-- **Complémentarité avec DL** : prétraitement pour Graph Neural Networks
-- **Interprétabilité** : compréhension des décisions (XAI)
-- **Efficacité** : ressources limitées (edge computing, satellite)
-- **Apprentissage faible** : annotations coûteuses
-
-### Perspectives
-
-- Intégration dans pipelines deep learning (superpixel pooling)
-- Extension aux vidéos (cohérence temporelle)
-- Optimisation GPU pour temps réel
-- Adaptation pour imagerie médicale/satellite
 
 ---
 
