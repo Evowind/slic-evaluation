@@ -89,6 +89,49 @@ où :
 
 ---
 
+---
+
+## Métriques d'évaluation
+
+### Métriques avec Ground Truth
+
+**Boundary Recall (BR)** : Proportion de contours du GT correctement détectés
+- Formule : `BR = contours_detectes / total_contours_GT`
+- Plage : [0, 1], plus élevé = meilleur
+
+**Under-segmentation Error (UE)** : Débordement des superpixels
+- Mesure les pixels débordant hors des segments GT
+- Plage : [0, ∞], plus bas = meilleur
+
+**Achievable Segmentation Accuracy (ASA)** : Précision théorique maximale
+- Assigne chaque superpixel à la classe GT majoritaire
+- Plage : [0, 1], plus élevé = meilleur
+
+**Precision (P)** : Exactitude des contours prédits
+- Proportion de contours prédits qui sont réellement des contours GT
+- Plage : [0, 1], plus élevé = meilleur
+
+**Contour Density (CD)** : Ratio densité contours prédits/GT
+- CD ≈ 1.0 : densité optimale
+- CD > 1.0 : sur-détection
+- CD < 1.0 : sous-détection
+
+### Métriques intrinsèques (sans GT)
+
+**Compactness** : Mesure la régularité des formes
+- Formule : `C = 4π × aire / périmètre²`
+- Plage : [0, 1], 1.0 = cercle parfait
+
+**Regularity** : Uniformité des tailles
+- Basée sur coefficient de variation des tailles
+- Plage : [0, 1], 1.0 = toutes tailles identiques
+
+**Global Regularity (GR)** : Uniformité de la grille spatiale
+- Basée sur écart-type des distances inter-centres
+- Plage : [0, 1], 1.0 = grille parfaitement régulière
+
+---
+
 ## Résultats
 
 ### Comparaison visuelle
@@ -219,7 +262,7 @@ Ces écarts justifient l’approche retenue :
 
 ---
 
-### Conclusion
+### Analyse des paramètres et réglages robustes
 
 L’étude paramétrique, basée sur une recherche en grille multi-métrique, montre que :
 
@@ -231,7 +274,7 @@ Cette section est désormais **strictement cohérente** avec le fonctionnement r
 
 ---
 
-### Conclusion synthétique
+### Synthèse comparative : SLIC vs SLIC IPOL
 
 SLIC IPOL n’est pas strictement supérieur à SLIC sur toutes les métriques.
 Ses avantages principaux sont :
@@ -247,13 +290,6 @@ En contrepartie :
 
 sont légèrement dégradés.
 Le choix entre SLIC et SLIC IPOL dépend donc clairement de la priorité donnée soit à la vitesse et à la cohérence régionale, soit à la précision des contours.
-
----
-
-Voici une **réécriture complète, corrigée et cohérente** de la section, prête à être intégrée telle quelle dans ton README.
-Les chiffres correspondent **aux recalculs réels à partir du formulaire (12 testeurs)** et la formulation est plus rigoureuse, sans sur-interprétation.
-
----
 
 ## Évaluation qualitative (12 testeurs)
 
@@ -523,47 +559,6 @@ labels_original = slic.fit(image)
 slic_ipol = SLIC_IPOL(n_segments=200, compactness=10)
 labels_ipol = slic_ipol.fit(image)
 ```
-
----
-
-## Métriques d'évaluation
-
-### Métriques avec Ground Truth
-
-**Boundary Recall (BR)** : Proportion de contours du GT correctement détectés
-- Formule : `BR = contours_detectes / total_contours_GT`
-- Plage : [0, 1], plus élevé = meilleur
-
-**Under-segmentation Error (UE)** : Débordement des superpixels
-- Mesure les pixels débordant hors des segments GT
-- Plage : [0, ∞], plus bas = meilleur
-
-**Achievable Segmentation Accuracy (ASA)** : Précision théorique maximale
-- Assigne chaque superpixel à la classe GT majoritaire
-- Plage : [0, 1], plus élevé = meilleur
-
-**Precision (P)** : Exactitude des contours prédits
-- Proportion de contours prédits qui sont réellement des contours GT
-- Plage : [0, 1], plus élevé = meilleur
-
-**Contour Density (CD)** : Ratio densité contours prédits/GT
-- CD ≈ 1.0 : densité optimale
-- CD > 1.0 : sur-détection
-- CD < 1.0 : sous-détection
-
-### Métriques intrinsèques (sans GT)
-
-**Compactness** : Mesure la régularité des formes
-- Formule : `C = 4π × aire / périmètre²`
-- Plage : [0, 1], 1.0 = cercle parfait
-
-**Regularity** : Uniformité des tailles
-- Basée sur coefficient de variation des tailles
-- Plage : [0, 1], 1.0 = toutes tailles identiques
-
-**Global Regularity (GR)** : Uniformité de la grille spatiale
-- Basée sur écart-type des distances inter-centres
-- Plage : [0, 1], 1.0 = grille parfaitement régulière
 
 ---
 
